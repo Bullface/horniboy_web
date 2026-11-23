@@ -1,0 +1,126 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#101711">
+  <meta name="description" content="Horniboy durchsucht mehrere Baumärkte und Shops mit einem Suchbegriff – direkt im Browser.">
+  <title>Horniboy · Shopsuche</title>
+  <link rel="icon" type="image/svg+xml" href="./icon.svg">
+  <link rel="stylesheet" href="./styles.css">
+  <script type="module" src="./diagnostics.js"></script>
+  <script type="module" src="./app.js"></script>
+</head>
+<body data-theme="dark">
+  <div class="app-shell">
+    <aside class="sidebar" aria-label="Shop-Gruppen">
+      <div class="brand">
+        <span class="brand-symbol" aria-hidden="true">H<span class="brand-dot"></span></span>
+        <div><strong>Horniboy</strong><span>Multi-Shop-Suche</span></div>
+      </div>
+      <div class="sidebar-separator"></div>
+      <div class="sidebar-heading"><span>GRUPPEN</span><button id="enable-all-groups" class="text-button" type="button" title="Alle Gruppen aktivieren">Alle an</button></div>
+      <div id="group-filters" class="group-filters"></div>
+      <div class="sidebar-separator"></div>
+      <div class="sidebar-heading"><span>WERKZEUGE</span></div>
+      <button class="sidebar-action" id="settings-btn" type="button"><span aria-hidden="true">⚙</span> Shops & Gruppen verwalten</button>
+      <button class="sidebar-action" id="export-btn" type="button"><span aria-hidden="true">⇩</span> Einstellungen exportieren</button>
+      <button class="sidebar-action" id="import-btn" type="button"><span aria-hidden="true">⇧</span> Einstellungen importieren</button>
+      <button class="sidebar-action" id="diagnostics-btn" type="button"><span aria-hidden="true">⌁</span> Diagnose & Fehlerbericht</button>
+      <input id="import-file" type="file" accept=".json,.txt,application/json,text/plain" hidden>
+      <div class="sidebar-spacer"></div>
+      <div class="sidebar-note"><span class="status-led" aria-hidden="true"></span> Cloudflare-ready<span>Keine Anmeldung, kein Server erforderlich. Daten bleiben in deinem Browser.</span></div>
+    </aside>
+
+    <main class="main-content">
+      <header class="topbar">
+        <div class="breadcrumb"><span class="crumb-root">ÜBERSICHT</span><span class="crumb-divider">/</span><strong>Suche</strong></div>
+        <div class="topbar-actions"><button id="mobile-settings-btn" class="icon-button mobile-only" type="button" title="Einstellungen" aria-label="Einstellungen öffnen">⚙</button><span class="privacy-indicator"><span class="status-led" aria-hidden="true"></span> Lokal gespeichert</span><button id="theme-btn" type="button" class="icon-button" title="Farbschema wechseln" aria-label="Farbschema wechseln">☼</button></div>
+      </header>
+
+      <div class="page-inner">
+        <section class="hero" aria-labelledby="hero-title">
+          <div class="eyebrow"><span class="eyebrow-line"></span> EIN SUCHBEGRIFF. MEHRERE SHOPS.</div>
+          <h1 id="hero-title">Finden. Vergleichen.<br><em>Direkt zum Shop.</em></h1>
+          <p>Starte eine Suche bei deinen ausgewählten Baumärkten, Marktplätzen und anderen Shops – alles von einem Ort aus.</p>
+          <form id="search-form" class="search-form" autocomplete="off">
+            <label for="search-input" class="sr-only">Suchbegriff</label>
+            <span class="search-icon" aria-hidden="true">⌕</span>
+            <input id="search-input" name="q" type="search" placeholder="Was suchst du? z. B. Akkuschrauber…" maxlength="300" required autofocus>
+            <span class="search-shortcut" aria-hidden="true">/</span>
+            <button class="primary-button" type="submit">Shops durchsuchen <span aria-hidden="true">↗</span></button>
+          </form>
+          <div class="search-meta"><span id="active-count">5 Shops ausgewählt</span><span class="meta-separator">·</span><span>Ergebnisse öffnen auf den Originalseiten</span></div>
+          <p id="search-status" class="search-status" role="status" aria-live="polite">Bereit – Suchergebnisse werden als direkte Shoplinks erzeugt, nicht eingebettet.</p>
+        </section>
+
+        <section class="quick-section" aria-label="Gespeicherte und frühere Suchen">
+          <div class="quick-heading"><h2>Gespeicherte Suchen</h2><button id="save-search-btn" class="small-outline-button" type="button">+ Aktuelle Suche speichern</button></div>
+          <div id="saved-list" class="chip-row"><span class="muted-hint">Noch keine gespeicherten Suchen.</span></div>
+          <div class="quick-heading history-heading"><h2>Zuletzt gesucht</h2><button id="clear-history-btn" class="text-button" type="button">Verlauf löschen</button></div>
+          <div id="history-list" class="chip-row"><span class="muted-hint">Deine letzten Suchbegriffe erscheinen hier.</span></div>
+        </section>
+
+        <section class="results-section" aria-labelledby="results-heading">
+          <div class="results-head">
+            <div><div class="eyebrow results-eyebrow">SUCHERGEBNISSE</div><h2 id="results-heading">Deine Shops <span id="results-count" class="result-count">0</span></h2><p id="results-subtitle">Gib oben einen Suchbegriff ein, um zu starten.</p></div>
+            <button id="open-all-btn" class="secondary-button" type="button" disabled>Alle aktiven Shops öffnen <span aria-hidden="true">↗</span></button>
+          </div>
+          <div id="shop-results" class="shop-grid" aria-live="polite"></div>
+          <div id="empty-state" class="empty-state"><div class="empty-mark">⌕</div><h3>Alles bereit für deine Suche.</h3><p>Wähle deine Shop-Gruppen aus und suche nach einem Produkt. Die passenden Links erscheinen hier.</p></div>
+          <p class="result-disclaimer">Hinweis: Viele Shopseiten verhindern aus Sicherheitsgründen die Einbettung in fremde Websites. Horniboy öffnet daher echte Suchergebnisse beim jeweiligen Anbieter. Produktpreise werden nicht automatisiert ausgelesen.</p>
+        </section>
+
+        <footer class="footer"><span>HORNIBOY <span class="footer-version">WEB 2.0</span></span><span>Basierend auf dem ursprünglichen Projekt · Für Cloudflare Pages</span></footer>
+      </div>
+    </main>
+  </div>
+
+  <dialog id="settings-dialog" class="modal settings-modal" aria-labelledby="settings-title">
+    <div class="modal-header"><div><span class="eyebrow">PERSONALISIERUNG</span><h2 id="settings-title">Shops & Gruppen</h2><p>Wähle aus, wo Horniboy suchen soll.</p></div><button class="modal-close icon-button" type="button" data-close="settings-dialog" aria-label="Schließen">✕</button></div>
+    <div class="modal-content">
+      <div class="settings-section-heading"><h3>Gruppen</h3><button id="add-group-btn" class="small-outline-button" type="button">+ Gruppe</button></div>
+      <form id="group-form" class="inline-form" hidden><label for="group-name" class="sr-only">Gruppenname</label><input id="group-name" maxlength="60" placeholder="Gruppenname" required><button type="submit" class="primary-button compact">Speichern</button><button type="button" id="cancel-group-btn" class="small-outline-button">Abbrechen</button></form>
+      <div id="settings-groups" class="settings-list"></div>
+      <div class="settings-section-heading space-top"><h3>Shops</h3><button id="add-shop-btn" class="small-outline-button" type="button">+ Shop hinzufügen</button></div>
+      <div id="settings-shops" class="settings-list"></div>
+      <div class="setting-actions"><button id="settings-export-btn" type="button" class="small-outline-button">⇩ Exportieren</button><button id="settings-import-btn" type="button" class="small-outline-button">⇧ Importieren</button></div><div class="setting-actions"><button id="add-presets-btn" type="button" class="small-outline-button">+ Weitere Shop-Vorlagen hinzufügen</button><button id="reset-btn" type="button" class="danger-link">Zurücksetzen</button></div>
+      <p class="help-copy">Importiert werden können die neuen Horniboy-JSON-Dateien, ältere Electron-<code>config.json</code>-Dateien und <code>urls.txt</code>. Einstellungen werden nur auf diesem Gerät gespeichert.</p>
+    </div>
+  </dialog>
+
+  <dialog id="shop-dialog" class="modal edit-modal" aria-labelledby="shop-dialog-title">
+    <form id="shop-form">
+      <div class="modal-header"><div><span class="eyebrow">SUCHVORLAGE</span><h2 id="shop-dialog-title">Shop hinzufügen</h2></div><button type="button" class="modal-close icon-button" data-close="shop-dialog" aria-label="Schließen">✕</button></div>
+      <div class="modal-content form-fields">
+        <label for="shop-name">Anzeigename</label><input id="shop-name" maxlength="80" placeholder="z. B. Mein Baumarkt" required>
+        <label for="shop-template">URL-Vorlage <span class="label-note">mit {search_keyword}</span></label><input id="shop-template" type="text" maxlength="2048" placeholder="https://example.com/search?q={search_keyword}" required spellcheck="false">
+        <div class="autodetect"><label for="shop-real-url">Oder: echte Such-URL automatisch erkennen</label><div class="input-row"><input id="shop-real-url" placeholder="https://shop.de/search?q=bohrer" spellcheck="false"><button id="detect-btn" type="button" class="small-outline-button">Erkennen</button></div><p id="detect-feedback" class="field-help">Kopiere einen Link zu einer Suche beim Anbieter hier hinein.</p></div>
+        <label for="shop-group">Gruppe</label><select id="shop-group"></select>
+        <label class="check-line"><input id="shop-enabled" type="checkbox" checked> Shop aktivieren</label>
+        <p id="shop-error" class="form-error" role="alert" hidden></p>
+      </div>
+      <div class="modal-footer"><button type="button" class="small-outline-button" data-close="shop-dialog">Abbrechen</button><button type="submit" class="primary-button compact">Shop speichern</button></div>
+    </form>
+  </dialog>
+
+  <dialog id="save-dialog" class="modal edit-modal" aria-labelledby="save-dialog-title">
+    <form id="favorite-form"><div class="modal-header"><div><span class="eyebrow">FAVORITEN</span><h2 id="save-dialog-title">Suche speichern</h2></div><button type="button" class="modal-close icon-button" data-close="save-dialog" aria-label="Schließen">✕</button></div><div class="modal-content form-fields"><label for="favorite-name">Name der Suche</label><input id="favorite-name" maxlength="80" required><span id="favorite-preview" class="field-help"></span></div><div class="modal-footer"><button type="button" class="small-outline-button" data-close="save-dialog">Abbrechen</button><button type="submit" class="primary-button compact">Speichern</button></div></form>
+  </dialog>
+
+  <dialog id="diagnostics-dialog" class="modal diagnostics-modal" aria-labelledby="diagnostics-title">
+    <div class="modal-header"><div><span class="eyebrow">FEHLERSUCHE</span><h2 id="diagnostics-title">Horniboy-Diagnose</h2><p id="diagnostics-summary" role="status">Status wird ermittelt.</p></div><button id="diagnostics-close" class="modal-close icon-button" type="button" aria-label="Schließen">✕</button></div>
+    <div class="modal-content">
+      <p class="help-copy">Hier siehst du Browserfehler und ob die Dateien der Website geladen werden. <strong>Fremde Shopseiten werden nicht eingebettet</strong>, weil diese das im Browser verhindern können. Die Diagnose kontaktiert nur diese Website, nicht die Shops. Der Bericht enthält technische Browserinformationen – bitte vor dem Teilen prüfen.</p>
+      <div class="diagnostics-actions">
+        <button id="diagnostics-check" class="small-outline-button" type="button">Dateien erneut prüfen</button>
+        <button id="diagnostics-copy" class="small-outline-button" type="button">Bericht kopieren</button>
+        <button id="diagnostics-download" class="small-outline-button" type="button">JSON herunterladen</button>
+      </div>
+      <pre id="diagnostics-output" class="diagnostics-output" aria-label="Diagnosebericht"></pre>
+      <p class="help-copy">Schnellzugriff: <code>?debug=1</code> an die Website-Adresse anhängen. Der Bericht enthält keine Suchbegriffe oder gespeicherten Suchen.</p>
+    </div>
+  </dialog>
+  <div id="toast" class="toast" role="status" aria-live="polite" hidden></div>
+</body>
+</html>
