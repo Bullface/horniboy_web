@@ -1,0 +1,17 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {launch,getStatus,command,openController} from '../public/native.js';
+import {DEFAULT_SITES} from '../public/shared.js';
+function fake(){
+  const wins=new Map(),tabs=new Map(),store={},removed=[],nav=[];let id=1;
+  const api={storage:{session:{get:async k=>({[k]:store[k]}),set:async o=>Object.assign(store,o)}},runtime:{getURL:p=>'chrome-extension://abc/'+p},
+    system:{display:{getInfo:async()=>[{isPrimary:true,bounds:{left:0,top:0,width:1920,height:1080},workArea:{left:0,top:0,width:1920,height:1080}}]}},
+    windows:{get:async i=>{if(!wins.has(i))throw Error();return wins.get(i)},getLastFocused:async()=>({id:0}),create:async opts=>{const w={id:id++,...opts};const t={id:id++,windowId:w.id,url:opts.url,status:'loading'};tabs.set(t.id,t);w.tabs=[t];wins.set(w.id,w);return w;},update:async(i,o)=>{if(!wins.has(i))throw Error();Object.assign(wins.get(i),o);return wins.get(i);}},
+    tabs:{get:async i=>{if(!tabs.has(i))throw Error();return tabs.get(i);},query:async({windowId})=>[...tabs.values()].filter(t=>t.windowId===windowId),update:async(i,o)=>{Object.assign(tabs.get(i),o);nav.push(o.url);},remove:async i=>{removed.push(i);tabs.delete(i);},reload:async()=>{},goBack:async()=>{},goForward:async()=>{}}};
+  return {api,tabs,wins,removed,nav};
+}
+test('creates native windows and reuses managed tabs on subsequent search',async()=>{const f=fake();const opts={sites:DEFAULT_SITES.slice(0,2),query:'drill',columns:3};const first=await launch(f.api,opts);assert.equal(first.items.length,2);assert.equal(f.wins.size,2);assert.ok([...f.wins.values()].every(w=>w.type==='normal'));assert.ok([...f.tabs.values()].every(t=>t.url.includes('drill')));await launch(f.api,{...opts,query:'hammer'});assert.equal(f.wins.size,2);assert.equal(f.nav.length,2);assert.ok(f.nav.every(u=>u.includes('hammer')));});
+test('status, close only owned tabs, leave unrelated tabs intact',async()=>{const f=fake();const unrelated=await f.api.windows.create({url:'https://example.org',type:'normal'});const result=await launch(f.api,{sites:DEFAULT_SITES.slice(0,1),query:'x'});const item=result.items[0];f.tabs.get(item.tabId).status='complete';assert.equal((await getStatus(f.api))[0].status,'loaded');assert.equal((await command(f.api,{action:'focus',template:item.template})).ok,true);await command(f.api,{action:'close-all'});assert.ok(f.tabs.has(unrelated.tabs[0].id));assert.deepEqual(f.removed,[item.tabId]);});
+test('manually closed tab is replaced, invalid template rejected without closing tabs',async()=>{const f=fake();const opts={sites:DEFAULT_SITES.slice(0,1),query:'x'};const first=await launch(f.api,opts);f.tabs.delete(first.items[0].tabId);assert.equal((await getStatus(f.api))[0].status,'closed');const second=await launch(f.api,opts);assert.notEqual(second.items[0].tabId,first.items[0].tabId);await assert.rejects(launch(f.api,{...opts,sites:[{name:'bad',template:'javascript:{search_keyword}'}]}));assert.ok(f.tabs.has(second.items[0].tabId));});
+test('controller reopens existing popup rather than duplicating',async()=>{const f=fake();const id=await openController(f.api);assert.equal(await openController(f.api),id);assert.equal(f.wins.size,1);});
+test('failed creation reports error, not indefinite loading',async()=>{const f=fake();f.api.windows.create=async()=>{throw Error('denied');};const r=await launch(f.api,{sites:DEFAULT_SITES.slice(0,1),query:'x'});assert.equal(r.items[0].status,'error');assert.equal(r.items[0].code,'WINDOW_OPEN_FAILED');});

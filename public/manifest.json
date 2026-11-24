@@ -1,0 +1,18 @@
+{
+  "manifest_version": 3,
+  "name": "Horniboy — tiled shop browser",
+  "version": "3.0.0",
+  "description": "One search across your selected shops in native browser windows.",
+  "minimum_chrome_version": "102",
+  "permissions": [
+    "storage",
+    "system.display"
+  ],
+  "action": {
+    "default_title": "Open Horniboy"
+  },
+  "background": {
+    "service_worker": "background.js",
+    "type": "module"
+  }
+}

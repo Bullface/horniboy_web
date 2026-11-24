@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Horniboy</title>
+  <link rel="icon" href="./icon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="./style.css">
+  <script type="module" src="./app.js"></script>
+</head>
+<body>
+  <header class="masthead"><span class="ornament" aria-hidden="true">◆ ◇ ◆</span><strong>HORNIBOY</strong><span id="edition">MULTI-SHOP SEARCH</span><span id="version" class="version">3.0</span></header>
+  <form id="search-bar">
+    <label class="sr-only" for="searchInput">Search term</label>
+    <input type="search" id="searchInput" placeholder="Search for products..." maxlength="200" required autofocus>
+    <button id="searchBtn" class="primary" type="submit">Search</button>
+    <button id="settingsBtn" type="button">Sites</button>
+    <button id="clearHistoryBtn" type="button">Clear history</button>
+    <button id="debugBtn" type="button">Debug</button>
+  </form>
+  <div id="history" aria-label="Search history"></div>
+  <div id="controls" aria-label="Enabled websites"></div>
+  <div id="toolbar" aria-label="Search controls"></div>
+  <p id="status" role="status" aria-live="polite">Starting Horniboy… If this message remains, check whether JavaScript is enabled and the app files loaded.</p>
+  <main id="views" aria-label="Search results"></main>
+  <footer><span>◆</span> One search. Many shops. <span>◆</span><small id="footer-note"></small></footer>
+  <dialog id="settingsDialog" aria-labelledby="settingsTitle">
+    <form id="settingsForm">
+      <h2 id="settingsTitle">Search providers</h2>
+      <p>One website per line. Use <code>Name | https://example.com/search?q={search_keyword}</code> or paste a search URL template by itself. HTTPS only. The placeholder is replaced with the encoded search term.</p>
+      <p id="settingsNote"></p>
+      <label for="siteList">Website list</label>
+      <textarea id="siteList" rows="10" spellcheck="false" required></textarea>
+      <p id="settingsError" role="alert"></p>
+      <div class="actions"><button type="button" id="restoreBtn">Original five</button><span class="spacer"></span><button type="button" id="cancelSettings">Cancel</button><button type="submit" class="primary">Save sites</button></div>
+    </form>
+  </dialog>
+  <dialog id="debugDialog" aria-labelledby="debugTitle">
+    <h2 id="debugTitle">Diagnostics</h2>
+    <p>Local technical events, not a stock guarantee. Review the report before sharing it.</p>
+    <pre id="debugOutput"></pre>
+    <div class="actions"><button id="copyDebug" type="button">Copy JSON</button><button id="downloadDebug" type="button">Download JSON</button><span class="spacer"></span><button id="closeDebug" type="button">Close</button></div>
+  </dialog>
+  <noscript>Horniboy needs JavaScript to search.</noscript>
+</body>
+</html>
