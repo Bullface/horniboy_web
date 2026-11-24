@@ -1,0 +1,22 @@
+name: Cloudflare preview configuration
+on:
+  push:
+    branches: [main, cloudflare-web, browser-addon, cloudflare-worker]
+  workflow_dispatch:
+jobs:
+  validate:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: npm ci
+      - run: npm run build
+      - name: Validate branch deployment configuration
+        run: node scripts/check-preview.mjs
+      - name: Check Wrangler preview command
+        run: npx --yes wrangler@latest preview --help
+      - name: Validate Worker bundle and static assets without deploying
+        run: npx --yes wrangler@latest deploy --dry-run --outdir .wrangler/preview-check
