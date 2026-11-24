@@ -1,0 +1,22 @@
+name: Public provider compatibility (one search each)
+on:
+  push:
+    branches: [cloudflare-worker]
+    paths:
+      - 'worker/**'
+      - 'scripts/live-smoke.mjs'
+  workflow_dispatch:
+jobs:
+  live:
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: node scripts/live-smoke.mjs | tee provider-compatibility.json
+      - uses: actions/upload-artifact@v4
+        with:
+          name: provider-compatibility
+          path: provider-compatibility.json
