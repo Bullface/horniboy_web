@@ -55,7 +55,9 @@ export function robotsAllows(text,url,agent='horniboy'){
   }
   flush();
   const specific=groups.filter(g=>g.agents.some(a=>a!=='*'&&agent.toLowerCase().includes(a)));
-  const selected=specific.length?specific:groups.filter(g=>g.agents.includes('*'));
+  const lengthOf=g=>Math.max(0,...g.agents.filter(a=>a!=='*'&&agent.toLowerCase().includes(a)).map(a=>a.length));
+  const mostSpecific=Math.max(0,...specific.map(lengthOf));
+  const selected=specific.length?specific.filter(g=>lengthOf(g)===mostSpecific):groups.filter(g=>g.agents.includes('*'));
   const u=new URL(url),target=canonical(u.pathname+u.search);
   let best=-1,allow=true;
   for(const g of selected)for(const r of g.rules){

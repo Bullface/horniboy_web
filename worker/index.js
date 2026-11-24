@@ -26,23 +26,23 @@ async function checkRobots(url,fetcher,signal,cache){
   let policy=cache.get(origin);
   if(!policy||policy.expires<now){
     let response;
-    try{response=await fetcher(origin+'/robots.txt',{redirect:'manual',signal,headers:{'user-agent':UA,accept:'text/plain'}});}catch{if(signal.aborted)throw Error('TIMEOUT');return 'robots_unverified';}
+    try{response=await fetcher(origin+'/robots.txt',{redirect:'manual',signal,headers:{'user-agent':UA,accept:'text/plain'}});}catch{if(signal.aborted)throw Error('TIMEOUT');return {error:'robots_unverified',diagnostics:{robotsReason:'network_error'}};}
     if(response.status===404||response.status===410)policy={text:'',expires:now+300000};
     else if(response.ok){
       const {text,truncated}=await readPrefix(response,MAX_ROBOTS);
-      if(truncated||/<html[\s>]/i.test(text.slice(0,300)))return 'robots_unverified';
+      if(truncated||/<html[\s>]/i.test(text.slice(0,300)))return {error:'robots_unverified',diagnostics:{robotsStatus:response.status,robotsReason:truncated?'response_too_large':'unexpected_html'}};
       policy={text,expires:now+300000};
-    }else{void response.body?.cancel().catch(()=>{});return 'robots_unverified';}
+    }else{void response.body?.cancel().catch(()=>{});return {error:'robots_unverified',diagnostics:{robotsStatus:response.status,robotsReason:'http_error'}};}
     if(cache.size>=50)cache.delete(cache.keys().next().value);
     cache.set(origin,policy);
   }
-  return robotsAllows(policy.text,url)?null:'robots_disallowed';
+  return robotsAllows(policy.text,url)?null:{error:'robots_disallowed',diagnostics:{robotsReason:'matching_disallow_rule'}};
 }
 async function retrieve(url,fetcher,signal,prefixes,cache){
   let current=url;
   for(let i=0;i<4;i++){
     if(!approvedURL(current,prefixes))return {error:'not_approved'};
-    const robots=await checkRobots(current,fetcher,signal,cache);if(robots)return {error:robots};
+    const robots=await checkRobots(current,fetcher,signal,cache);if(robots)return robots;
     const response=await fetcher(current,{redirect:'manual',signal,headers:{'user-agent':UA,'accept':'text/html,application/json;q=0.9','accept-language':'de-AT,de;q=0.9,en;q=0.5'}});
     if([301,302,303,307,308].includes(response.status)){
       const location=response.headers.get('location');void response.body?.cancel().catch(()=>{});
@@ -65,11 +65,11 @@ export async function runProvider(input,env={},options={}){
   const deadline=new Promise((_,reject)=>{timer=setTimeout(()=>{controller.abort();reject(Error('TIMEOUT'));},options.timeoutMs??TIMEOUT_MS);});
   const job=async()=>{
     const fetched=await retrieve(url,fetcher,controller.signal,prefixes,cache);
-    if(fetched.error)return failure(fetched.error,{httpStatus:fetched.httpStatus??null});
+    if(fetched.error)return failure(fetched.error,{httpStatus:fetched.httpStatus??null,diagnostics:fetched.diagnostics??null});
     const response=fetched.response,httpStatus=response.status,contentType=(response.headers.get('content-type')||'').toLowerCase();
     if([401,403,429,451].includes(httpStatus)){void response.body?.cancel().catch(()=>{});return failure('blocked',{httpStatus});}
     if(!response.ok&&httpStatus!==404){void response.body?.cancel().catch(()=>{});return failure('upstream_error',{httpStatus});}
-    if(!contentType.includes('html')&&!contentType.includes('json')){void response.body?.cancel().catch(()=>{});return failure('unsupported_content',{httpStatus,contentType:contentType.slice(0,80)});}
+    if(!contentType.includes('html')&&!contentType.includes('json')){void response.body?.cancel().catch(()=>{});return failure('unsupported_content',{httpStatus,diagnostics:{contentType:contentType.slice(0,80)}});}
     const {text,truncated}=await readPrefix(response,MAX_RESPONSE);
     const data=extractProducts(text,fetched.url,input.query,contentType);
     const diagnostics={httpStatus,truncated,structured:data.structured,malformed:data.malformed,found:data.found,matched:data.matched,sources:data.sources};

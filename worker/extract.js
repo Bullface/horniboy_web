@@ -48,7 +48,7 @@ function selectOffer(offers){
   return {...result,stores};
 }
 function productFromSchema(p,base){
-  const title=str(p.name),url=safeLink(p.url||p['@id']||list(p.offers)[0]?.url,base);
+  const title=str(p.name),url=safeLink(p.url||list(p.offers)[0]?.url||(typeof p['@id']==='string'&&!p['@id'].startsWith('#')?p['@id']:null),base);
   if(!title||!url)return null;
   const image=list(p.image)[0];
   return {title,url,sku:str(p.sku,80)||null,gtin:str(p.gtin13||p.gtin14||p.gtin,30)||null,brand:str(obj(p.brand)?p.brand.name:p.brand,100)||null,image:safeLink(obj(image)?image.url||image.contentUrl:image,base,false),...selectOffer(list(p.offers).filter(obj)),source:'json-ld'};

@@ -35,7 +35,7 @@ test('same approved redirect and robots cache reuse',async()=>{
 test('robots denial or unavailable policy stops before provider request',async()=>{
   let calls=0;const fetcher=async()=>{calls++;return response('User-agent: *\nDisallow: /search/',200,'text/plain');};
   assert.equal((await runProvider(input,{}, {cache:new Map(),fetcher})).status,'robots_disallowed');assert.equal(calls,1);
-  assert.equal((await runProvider(input,{}, {cache:new Map(),fetcher:async()=>response('Denied',403)})).status,'robots_unverified');
+  const denied=await runProvider(input,{}, {cache:new Map(),fetcher:async()=>response('Denied',403)});assert.equal(denied.status,'robots_unverified');assert.equal(denied.diagnostics.robotsStatus,403);
 });
 test('deadline resolves even when upstream fails to respond; transport failures distinct',async()=>{
   const f=fixture(()=>new Promise(()=>{}));assert.equal((await runProvider(input,{}, {...f.options,timeoutMs:25})).status,'timeout');

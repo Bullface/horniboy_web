@@ -4,10 +4,10 @@ export const MAX_PROVIDERS = 24;
 const STORE_KEY = 'horniboy:v3';
 export const DEFAULT_SITES = Object.freeze([
   {name:'Hornbach DE', template:'https://www.hornbach.de/s/{search_keyword}?f.dsall=im+Markt+vorrätig&isInitialRequest=false'},
-  {name:'Bauhaus DE', template:'https://www.bauhaus.info/search?availability=561&page=1&q={search_keyword}'},
+  {name:'Bauhaus DE', template:'https://www.bauhaus.info/suche/produkte?text={search_keyword}'},
   {name:'Sonderpreis Baumarkt', template:'https://www.sonderpreis-baumarkt.de/search?q={search_keyword}&search-button=&lang=de_DE'},
-  {name:'OBI AT', template:'https://www.obi.at/search/{search_keyword}?_availability=store'},
-  {name:'OBI DE', template:'https://www.obi.de/search/{search_keyword}?_availability=store'},
+  {name:'OBI AT', template:'https://www.obi.at/search/{search_keyword}/'},
+  {name:'OBI DE', template:'https://www.obi.de/search/{search_keyword}/'},
 ]);
 export function validTemplate(template) {
   if (typeof template !== 'string' || template.length > 2048 || !template.startsWith('https://') || template.split(PLACEHOLDER).length !== 2 || /[\u0000-\u0020\\]/.test(template)) return false;
