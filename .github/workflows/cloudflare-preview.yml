@@ -12,8 +12,11 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
-      - run: npm ci
-      - run: npm run build
+      - name: Clean install must generate dist without a separate build step
+        run: |
+          rm -rf dist
+          npm clean-install --progress=false
+          test -f dist/index.html
       - name: Validate branch deployment configuration
         run: node scripts/check-preview.mjs
       - name: Check Wrangler preview command
