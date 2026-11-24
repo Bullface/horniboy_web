@@ -30,9 +30,13 @@ Pushes to the production branch use the deploy command; other branches use the p
 
 Each branch has an explicit Wrangler configuration with its own assets and, when needed, entry point. No production credentials or data bindings are required for a basic preview. Optional provider allowlists must be configured separately for previews. All previews are subject to the account's plan limits; use access controls if publishing private previews.
 
+## Build fallback
+
+The root package runs `npm run build` in its npm `postinstall` lifecycle, so `npm ci` or `npm clean-install` creates `dist/` even if the dashboard Build command is empty. Keep `npm run build` as the explicit Build command if desired; the build is repeatable. Do not disable npm lifecycle scripts. If lifecycle scripts are disabled, use `npm run build && npx wrangler preview` as the Preview command and `npm run build && npx wrangler deploy` as the Deploy command.
+
 ## Verification
 
-The Cloudflare preview configuration workflow builds each branch and runs a Wrangler deployment dry run (no deployment and no credentials). It also checks that the CLI supports the preview command. This does not create an authenticated Cloudflare preview, which must be done through the connected account.
+The Cloudflare preview configuration workflow verifies a clean npm install generates dist without a separate build command, then runs a Wrangler deployment dry run (no deployment and no credentials). It also checks that the CLI supports the preview command. This does not create an authenticated Cloudflare preview, which must be done through the connected account.
 
 Official documentation:
 - https://developers.cloudflare.com/workers/ci-cd/builds/build-branches/
