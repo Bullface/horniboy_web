@@ -1,6 +1,6 @@
 # Cloudflare Workers — branch previews
 
-All Horniboy branches use the same Worker project name, `horniboy-worker`, and produce static assets in `dist/`. Only the `cloudflare-worker` branch also bundles the metasearch API. A single Git-connected Workers project can preview the different editions without merging them or deploying preview code to production.
+All Horniboy branches use the same Worker project name, `horniboy-web`, and produce static assets in `dist/`. Only the `cloudflare-worker` branch also bundles the metasearch API. A single Git-connected Workers project can preview the different editions without merging them or deploying preview code to production.
 
 ## One-time dashboard setup
 
@@ -18,7 +18,7 @@ In Workers & Pages, select the Git-connected Worker for Bullface/horniboy_web. I
 
 Use Wrangler 4.135.0 or later for Worker Previews. If your existing project offers a Set up Worker Previews banner, review the settings and complete Cloudflare's one-time switch before using the new preview command. That switch cannot be reversed. If you choose to keep the legacy preview model instead, use its existing `npx --yes wrangler@latest versions upload` command; those are version URLs, not isolated branch environments. Do not use `wrangler deploy` as the preview command.
 
-The shared name is the one already used in the cloudflare-worker branch. If your dashboard uses a different name, ensure the configured name matches the connected Worker (Cloudflare Builds can supply its name override). For local manual deployment, use the intended Worker name explicitly rather than accidentally creating a different production Worker.
+The shared name matches the existing Cloudflare Worker in the dashboard. If your dashboard uses a different name, ensure the configured name matches the connected Worker (Cloudflare Builds can supply its name override). For local manual deployment, use the intended Worker name explicitly rather than accidentally creating a different production Worker.
 
 Pushes to the production branch use the deploy command; other branches use the preview command. If a branch was pushed before preview builds were enabled, trigger a build for it from the dashboard or push a new commit. Find the actual URL in the Worker's Previews section/build log. Do not guess the account subdomain.
 
