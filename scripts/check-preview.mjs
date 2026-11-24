@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { readFile, stat } from 'node:fs/promises';
 const config = JSON.parse(await readFile('wrangler.jsonc','utf8'));
-assert.equal(config.name,'horniboy-worker');
+assert.equal(config.name,'horniboy-web');
 assert.equal(config.preview_urls,true);
 assert.deepEqual(config.previews,{});
 assert.equal(config.assets.directory,'./dist');
